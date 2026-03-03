@@ -87,6 +87,17 @@ const KEY_BG = "@stackdash_background";
 const KEY_MUSIC = "@stackdash_music_muted";
 const KEY_NICKNAME = "@stackdash_nickname";
 const KEY_DEVICE_ID = "@stackdash_device_id";
+const KEY_COINS = "@stackdash_coins";
+
+// Coin rewards
+const PERFECT_COIN_REWARD = 5;
+const COIN_MILESTONES = [
+  { score: 5, coins: 10 },
+  { score: 10, coins: 20 },
+  { score: 25, coins: 50 },
+  { score: 50, coins: 100 },
+  { score: 100, coins: 200 },
+];
 
 // ============================================================================
 // FIREBASE CONFIG (fill in your Firebase project credentials)
@@ -104,6 +115,7 @@ const FIREBASE_CONFIG = {
 
 const firebaseApp = initializeApp(FIREBASE_CONFIG);
 const db = getFirestore(firebaseApp);
+
 // ============================================================================
 // THEMES (3 — all free)
 // ============================================================================
@@ -156,20 +168,20 @@ const THEME_KEYS = Object.keys(THEMES);
 // ============================================================================
 
 const BLOCK_DESIGNS = {
-  classic: { label: "Classic", premium: false },
-  rounded: { label: "Rounded", premium: false },
-  gradient: { label: "Gradient", premium: true },
-  glow: { label: "Neon Glow", premium: true },
-  pixel: { label: "Pixel", premium: true },
-  striped: { label: "Striped", premium: true },
-  glass: { label: "Glass", premium: true },
-  metallic: { label: "Metallic", premium: true },
-  candy: { label: "Candy", premium: true },
-  retro: { label: "Retro", premium: true },
-  watery: { label: "Watery", premium: true },
-  fire: { label: "Fire", premium: true },
-  melting: { label: "Melting", premium: true },
-  electric: { label: "Electric", premium: true },
+  classic: { label: "Classic", premium: false, cost: 0 },
+  rounded: { label: "Rounded", premium: false, cost: 0 },
+  gradient: { label: "Gradient", premium: true, cost: 50 },
+  pixel: { label: "Pixel", premium: true, cost: 50 },
+  striped: { label: "Striped", premium: true, cost: 50 },
+  glass: { label: "Glass", premium: true, cost: 150 },
+  candy: { label: "Candy", premium: true, cost: 150 },
+  retro: { label: "Retro", premium: true, cost: 150 },
+  watery: { label: "Watery", premium: true, cost: 150 },
+  glow: { label: "Neon Glow", premium: true, cost: 300 },
+  metallic: { label: "Metallic", premium: true, cost: 300 },
+  fire: { label: "Fire", premium: true, cost: 300 },
+  melting: { label: "Melting", premium: true, cost: 300 },
+  electric: { label: "Electric", premium: true, cost: 300 },
 };
 const DESIGN_KEYS = Object.keys(BLOCK_DESIGNS);
 
@@ -178,16 +190,16 @@ const DESIGN_KEYS = Object.keys(BLOCK_DESIGNS);
 // ============================================================================
 
 const BACKGROUNDS = {
-  clean: { label: "Clean", premium: false },
-  grid: { label: "Grid", premium: false },
-  dots: { label: "Dots", premium: false },
-  geometric: { label: "Geometric", premium: true },
-  waves: { label: "Waves", premium: true },
-  circuit: { label: "Circuit", premium: true },
-  starfield: { label: "Starfield", premium: true },
-  hexgrid: { label: "Hex Grid", premium: true },
-  rain: { label: "Rain", premium: true },
-  aurora: { label: "Aurora", premium: true },
+  clean: { label: "Clean", premium: false, cost: 0 },
+  grid: { label: "Grid", premium: false, cost: 0 },
+  dots: { label: "Dots", premium: false, cost: 0 },
+  geometric: { label: "Geometric", premium: true, cost: 50 },
+  waves: { label: "Waves", premium: true, cost: 50 },
+  circuit: { label: "Circuit", premium: true, cost: 150 },
+  hexgrid: { label: "Hex Grid", premium: true, cost: 150 },
+  rain: { label: "Rain", premium: true, cost: 150 },
+  starfield: { label: "Starfield", premium: true, cost: 300 },
+  aurora: { label: "Aurora", premium: true, cost: 300 },
 };
 const BG_KEYS = Object.keys(BACKGROUNDS);
 
@@ -1011,6 +1023,7 @@ function SettingsOverlay({
   onReset,
   onSignOut,
   onExit,
+  coins,
 }) {
   const [confirmItem, setConfirmItem] = useState(null);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
@@ -1032,6 +1045,40 @@ function SettingsOverlay({
         contentContainerStyle={styles.settingsContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* ---- COIN BALANCE ---- */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: theme.card,
+            borderRadius: 16,
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            marginBottom: 16,
+          }}
+        >
+          <Text style={{ fontSize: 20, marginRight: 8 }}>🪙</Text>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: "800",
+              color: "#FFD700",
+            }}
+          >
+            {coins}
+          </Text>
+          <Text
+            style={{
+              fontSize: 13,
+              color: theme.textSub,
+              marginLeft: 8,
+            }}
+          >
+            coins
+          </Text>
+        </View>
+
         {/* ---- MUSIC TOGGLE ---- */}
         <View style={styles.musicRow}>
           <Text style={[styles.musicLabel, { color: theme.text }]}>Music</Text>
@@ -1267,13 +1314,15 @@ function SettingsOverlay({
       {confirmItem &&
         (() => {
           const isDesign = confirmItem.type === "design";
-          const label = isDesign
-            ? BLOCK_DESIGNS[confirmItem.key]?.label
-            : BACKGROUNDS[confirmItem.key]?.label;
+          const itemData = isDesign
+            ? BLOCK_DESIGNS[confirmItem.key]
+            : BACKGROUNDS[confirmItem.key];
+          const label = itemData?.label;
+          const cost = itemData?.cost || 0;
           const purchaseKey = isDesign
             ? confirmItem.key
             : `bg_${confirmItem.key}`;
-          const desc = isDesign ? "premium block design" : "premium background";
+          const canAfford = coins >= cost;
           return (
             <View
               style={{
@@ -1323,25 +1372,43 @@ function SettingsOverlay({
                     >
                       Unlock "{label}"?
                     </Text>
-                    <Text
+                    <View
                       style={{
-                        fontSize: 13,
-                        color: theme.textSub,
+                        flexDirection: "row",
+                        alignItems: "center",
                         marginBottom: 6,
-                        textAlign: "center",
                       }}
                     >
-                      This is a {desc}.
-                    </Text>
+                      <Text style={{ fontSize: 18, marginRight: 6 }}>🪙</Text>
+                      <Text
+                        style={{
+                          fontSize: 24,
+                          fontWeight: "800",
+                          color: "#FFD700",
+                        }}
+                      >
+                        {cost}
+                      </Text>
+                    </View>
+                    {!canAfford && (
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: "#FF6B6B",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Not enough coins! You need {cost - coins} more
+                      </Text>
+                    )}
                     <Text
                       style={{
-                        fontSize: 22,
-                        fontWeight: "800",
-                        color: theme.accent,
-                        marginBottom: 20,
+                        fontSize: 12,
+                        color: theme.textSub,
+                        marginBottom: 16,
                       }}
                     >
-                      Free
+                      Your balance: {coins} coins
                     </Text>
                     <View style={{ flexDirection: "row", gap: 12 }}>
                       <Pressable
@@ -1366,22 +1433,25 @@ function SettingsOverlay({
                       </Pressable>
                       <Pressable
                         onPress={() => {
-                          onPurchase(purchaseKey);
-                          if (isDesign) onSelectDesign(confirmItem.key);
-                          else onSelectBg(confirmItem.key);
-                          setUnlockSuccess(true);
-                          setTimeout(() => {
-                            setUnlockSuccess(false);
-                            setConfirmItem(null);
-                          }, 1200);
+                          if (!canAfford) return;
+                          const success = onPurchase(purchaseKey, cost);
+                          if (success) {
+                            if (isDesign) onSelectDesign(confirmItem.key);
+                            else onSelectBg(confirmItem.key);
+                            setUnlockSuccess(true);
+                            setTimeout(() => {
+                              setUnlockSuccess(false);
+                              setConfirmItem(null);
+                            }, 1200);
+                          }
                         }}
                         style={{
                           paddingVertical: 12,
                           paddingHorizontal: 28,
                           borderRadius: 20,
-                          backgroundColor: theme.accent,
+                          backgroundColor: canAfford ? theme.accent : theme.textMuted,
                           borderWidth: 1.5,
-                          borderColor: theme.accent,
+                          borderColor: canAfford ? theme.accent : theme.textMuted,
                         }}
                       >
                         <Text
@@ -1967,6 +2037,7 @@ export default function App() {
   const [activeDesign, setActiveDesign] = useState("classic");
   const [activeBg, setActiveBg] = useState("clean");
   const [purchases, setPurchases] = useState({ ...DEFAULT_PURCHASES });
+  const [coins, setCoins] = useState(0);
   const [musicMuted, setMusicMuted] = useState(false);
 
   // ---- Auth & leaderboard state ----
@@ -2002,6 +2073,9 @@ export default function App() {
   const shakeY = useRef(new Animated.Value(0)).current;
   const perfectTextScale = useRef(new Animated.Value(0)).current;
   const perfectTextOpacity = useRef(new Animated.Value(0)).current;
+  const coinPopAnim = useRef(new Animated.Value(0)).current;
+  const coinPopOpacity = useRef(new Animated.Value(0)).current;
+  const [coinEarned, setCoinEarned] = useState(0);
   const sparkles = useRef(
     Array.from({ length: 8 }, (_, i) => ({
       anim: new Animated.Value(0),
@@ -2019,6 +2093,8 @@ export default function App() {
   // Sync refs
   const musicMutedRef = useRef(false);
   const deviceIdRef = useRef(null);
+  const coinsRef = useRef(0);
+  const milestonesHitRef = useRef(new Set());
   useEffect(() => {
     gsRef.current = gameState;
   }, [gameState]);
@@ -2034,6 +2110,9 @@ export default function App() {
   useEffect(() => {
     deviceIdRef.current = deviceId;
   }, [deviceId]);
+  useEffect(() => {
+    coinsRef.current = coins;
+  }, [coins]);
 
   // ---------- Load all persisted data + device ID + nickname ----------
   useEffect(() => {
@@ -2048,7 +2127,7 @@ export default function App() {
         stackPlayer.volume = 0.6;
         perfectPlayer.volume = 0.7;
 
-        const [vBest, vTheme, vDesign, vBg, vPurch, vMuted, vNickname, vDeviceId] =
+        const [vBest, vTheme, vDesign, vBg, vPurch, vMuted, vNickname, vDeviceId, vCoins] =
           await Promise.all([
             AsyncStorage.getItem(KEY_BEST),
             AsyncStorage.getItem(KEY_THEME),
@@ -2058,6 +2137,7 @@ export default function App() {
             AsyncStorage.getItem(KEY_MUSIC),
             AsyncStorage.getItem(KEY_NICKNAME),
             AsyncStorage.getItem(KEY_DEVICE_ID),
+            AsyncStorage.getItem(KEY_COINS),
           ]);
         if (vBest !== null) {
           const p = parseInt(vBest, 10);
@@ -2073,6 +2153,10 @@ export default function App() {
           } catch (_) {}
         }
         if (vMuted === "true") setMusicMuted(true);
+        if (vCoins !== null) {
+          const c = parseInt(vCoins, 10);
+          if (!isNaN(c)) { setCoins(c); coinsRef.current = c; }
+        }
 
         // Device ID — generate if not exists
         let did = vDeviceId;
@@ -2330,14 +2414,18 @@ export default function App() {
     setActiveBg(k);
     AsyncStorage.setItem(KEY_BG, k).catch(() => {});
   }, []);
-  const handlePurchase = useCallback((purchaseKey) => {
+  const handlePurchase = useCallback((purchaseKey, cost) => {
+    if (coinsRef.current < cost) return false;
+    const newCoins = coinsRef.current - cost;
+    coinsRef.current = newCoins;
+    setCoins(newCoins);
+    AsyncStorage.setItem(KEY_COINS, String(newCoins)).catch(() => {});
     setPurchases((prev) => {
       const updated = { ...prev, [purchaseKey]: true };
-      AsyncStorage.setItem(KEY_PURCHASES, JSON.stringify(updated)).catch(
-        () => {},
-      );
+      AsyncStorage.setItem(KEY_PURCHASES, JSON.stringify(updated)).catch(() => {});
       return updated;
     });
+    return true;
   }, []);
   const handleToggleMusic = useCallback(() => {
     setMusicMuted((prev) => {
@@ -2416,6 +2504,7 @@ export default function App() {
     blocksRef.current = [base];
     scoreRef.current = 0;
     speedRef.current = BASE_SPEED;
+    milestonesHitRef.current = new Set();
     wRef.current = INIT_BLOCK_W;
     dirRef.current = 1;
     posRef.current = GAME_LEFT;
@@ -2530,6 +2619,38 @@ export default function App() {
     scoreRef.current = newScore;
     setScore(newScore);
     speedRef.current = Math.min(MAX_SPEED, BASE_SPEED + newScore * SPEED_INC);
+
+    // Award coins
+    let earned = 0;
+    if (isPerfect) earned += PERFECT_COIN_REWARD;
+    for (const m of COIN_MILESTONES) {
+      if (newScore >= m.score && !milestonesHitRef.current.has(m.score)) {
+        milestonesHitRef.current.add(m.score);
+        earned += m.coins;
+      }
+    }
+    if (earned > 0) {
+      const newCoins = coinsRef.current + earned;
+      coinsRef.current = newCoins;
+      setCoins(newCoins);
+      AsyncStorage.setItem(KEY_COINS, String(newCoins)).catch(() => {});
+      // Animate "+N" coin popup
+      setCoinEarned(earned);
+      coinPopAnim.setValue(0);
+      coinPopOpacity.setValue(1);
+      Animated.parallel([
+        Animated.timing(coinPopAnim, {
+          toValue: -30,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(coinPopOpacity, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
     const newStackTop = GAME_BASE_Y - updated.length * BLOCK_H;
     const newMovingY = newStackTop - BLOCK_H - HOVER_GAP;
     animateCamera(Math.max(0, MIN_MOVING_Y - newMovingY));
@@ -2878,6 +2999,46 @@ export default function App() {
             </View>
           </Pressable>
 
+          {/* Coin balance */}
+          <View
+            style={{
+              position: "absolute",
+              top: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 48 : 90,
+              left: 12,
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "rgba(0,0,0,0.35)",
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: 14,
+            }}
+          >
+            <Text style={{ fontSize: 16, marginRight: 4 }}>🪙</Text>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "700",
+                color: "#FFD700",
+              }}
+            >
+              {coins}
+            </Text>
+            {coinEarned > 0 && (
+              <Animated.Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: "800",
+                  color: "#66BB6A",
+                  marginLeft: 6,
+                  opacity: coinPopOpacity,
+                  transform: [{ translateY: coinPopAnim }],
+                }}
+              >
+                +{coinEarned}
+              </Animated.Text>
+            )}
+          </View>
+
           {/* Settings */}
           {menuOpen && (
             <SettingsOverlay
@@ -2896,6 +3057,7 @@ export default function App() {
               onReset={handleReset}
               onSignOut={handleSignOut}
               onExit={handleExit}
+              coins={coins}
             />
           )}
         </>

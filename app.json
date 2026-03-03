@@ -7,20 +7,35 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/icon.png",
       "backgroundColor": "#0A0A1A",
       "resizeMode": "contain"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kwng.perfectstack",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0A0A1A"
-      }
+      },
+      "package": "com.kwng.perfectstack",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "plugins": [
       "expo-audio"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a06d8d77-7717-4192-87de-5e514f6c7dea"
+      }
+    }
   }
 }
