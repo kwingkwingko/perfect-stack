@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Perfect Stack",
+    "slug": "perfect-stack",
+    "version": "1.0.0",
+    "scheme": "perfect-stack",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0A0A1A",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A1A"
+      }
+    },
+    "plugins": [
+      "expo-audio"
+    ]
+  }
+}
