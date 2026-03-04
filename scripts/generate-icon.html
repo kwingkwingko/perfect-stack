@@ -38,22 +38,21 @@
   <h2>Perfect Stack — App Icon (1024x1024)</h2>
   <canvas id="icon" width="1024" height="1024"></canvas>
   <button onclick="download()">Download Icon (PNG)</button>
-  <p>The downloaded file will have square corners — Apple rounds them automatically.</p>
+  <p>The downloaded file will have square corners — Apple/Google rounds them automatically.</p>
 
   <script>
     const S = 1024;
     const c = document.getElementById("icon");
     const ctx = c.getContext("2d");
 
-    // Colors from the game palette
     const PALETTE = [
       "#FF6B6B", "#FF8E53", "#FFC107", "#66BB6A",
       "#42A5F5", "#7E57C2", "#EC407A", "#26C6DA",
     ];
 
     // Background — dark gradient
-    const bg = ctx.createLinearGradient(0, 0, 0, S);
-    bg.addColorStop(0, "#0F0F2A");
+    const bg = ctx.createRadialGradient(S / 2, S / 2, 100, S / 2, S / 2, S * 0.7);
+    bg.addColorStop(0, "#161638");
     bg.addColorStop(1, "#0A0A1A");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, S, S);
@@ -66,109 +65,99 @@
       ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(S, i); ctx.stroke();
     }
 
-    // Draw stacked blocks
-    const blockW = 340;
-    const blockH = 70;
-    const startX = (S - blockW) / 2;
-    const startY = 720; // bottom of stack
-    const blocks = 7;
-    const gap = 6;
+    // --- TOP BLOCKS (above text) ---
+    const blockW = 300;
+    const blockH = 55;
+    const topStackX = (S - blockW) / 2;
+    const topBlocks = 3;
 
-    for (let i = 0; i < blocks; i++) {
-      const x = startX;
-      const y = startY - i * (blockH + gap);
-      const color = PALETTE[i % PALETTE.length];
-      const r = 14;
+    // Moving block with trail at the very top
+    const movY = 60;
+    const movColor = PALETTE[3];
+    ctx.globalAlpha = 0.07;
+    drawBlock(ctx, topStackX + 90, movY, blockW, blockH, movColor);
+    ctx.globalAlpha = 0.15;
+    drawBlock(ctx, topStackX + 50, movY, blockW, blockH, movColor);
+    ctx.globalAlpha = 1;
+    drawBlock(ctx, topStackX + 20, movY, blockW, blockH, movColor);
 
-      // Block shadow
-      ctx.fillStyle = "rgba(0,0,0,0.3)";
-      roundRect(ctx, x + 4, y + 4, blockW, blockH, r);
-      ctx.fill();
-
-      // Block body — gradient
-      const grad = ctx.createLinearGradient(x, y, x, y + blockH);
-      grad.addColorStop(0, lighten(color, 20));
-      grad.addColorStop(0.5, color);
-      grad.addColorStop(1, darken(color, 20));
-      ctx.fillStyle = grad;
-      roundRect(ctx, x, y, blockW, blockH, r);
-      ctx.fill();
-
-      // Shine on top
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      roundRect(ctx, x + 8, y + 4, blockW - 16, blockH * 0.35, r - 4);
-      ctx.fill();
-
-      // Top block sparkle effect (perfect indicator)
-      if (i === blocks - 1) {
-        drawSparkles(ctx, x + blockW / 2, y, blockW);
-      }
+    // Stacked blocks above text
+    for (let i = 0; i < topBlocks; i++) {
+      const y = 130 + i * (blockH + 5);
+      drawBlock(ctx, topStackX, y, blockW, blockH, PALETTE[i]);
     }
 
-    // Moving block above stack (slightly offset to show gameplay)
-    const movingY = startY - blocks * (blockH + gap) - 40;
-    const movingX = startX + 30; // slightly offset
-    const movingColor = PALETTE[blocks % PALETTE.length];
+    // Sparkles between top blocks and text
+    drawSparkles(ctx, S / 2, 125, blockW);
 
-    // Moving block shadow
-    ctx.fillStyle = "rgba(0,0,0,0.2)";
-    roundRect(ctx, movingX + 4, movingY + 4, blockW, blockH, 14);
-    ctx.fill();
-
-    // Moving block with dashed outline to show motion
-    const mGrad = ctx.createLinearGradient(movingX, movingY, movingX, movingY + blockH);
-    mGrad.addColorStop(0, lighten(movingColor, 20));
-    mGrad.addColorStop(0.5, movingColor);
-    mGrad.addColorStop(1, darken(movingColor, 20));
-    ctx.fillStyle = mGrad;
-    roundRect(ctx, movingX, movingY, blockW, blockH, 14);
-    ctx.fill();
-
-    // Motion trail for moving block
-    ctx.globalAlpha = 0.15;
-    ctx.fillStyle = movingColor;
-    roundRect(ctx, movingX + 60, movingY, blockW, blockH, 14);
-    ctx.fill();
-    ctx.globalAlpha = 0.07;
-    roundRect(ctx, movingX + 110, movingY, blockW, blockH, 14);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // "PERFECT STACK" text
+    // --- CENTER TEXT ---
     ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
-    // Text shadow
+    // "PERFECT" shadow
     ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.font = "bold 88px -apple-system, Helvetica, Arial, sans-serif";
-    ctx.fillText("PERFECT", S / 2 + 3, 183);
-    ctx.font = "bold 108px -apple-system, Helvetica, Arial, sans-serif";
-    ctx.fillText("STACK", S / 2 + 3, 283);
+    ctx.font = "bold 100px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("PERFECT", S / 2 + 3, S / 2 - 30 + 3);
 
-    // Main text
+    // "PERFECT" white
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "bold 88px -apple-system, Helvetica, Arial, sans-serif";
-    ctx.fillText("PERFECT", S / 2, 180);
+    ctx.font = "bold 100px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("PERFECT", S / 2, S / 2 - 30);
 
-    // "STACK" with gold gradient
-    const tGrad = ctx.createLinearGradient(S / 2 - 180, 220, S / 2 + 180, 280);
+    // "STACK" shadow
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.font = "bold 120px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("STACK", S / 2 + 3, S / 2 + 75 + 3);
+
+    // "STACK" gold gradient
+    const tGrad = ctx.createLinearGradient(S / 2 - 200, S / 2 + 30, S / 2 + 200, S / 2 + 120);
     tGrad.addColorStop(0, "#FFD700");
     tGrad.addColorStop(0.5, "#FFF3B0");
     tGrad.addColorStop(1, "#FFD700");
     ctx.fillStyle = tGrad;
-    ctx.font = "bold 108px -apple-system, Helvetica, Arial, sans-serif";
-    ctx.fillText("STACK", S / 2, 280);
+    ctx.font = "bold 120px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("STACK", S / 2, S / 2 + 75);
+
+    // --- BOTTOM BLOCKS (below text) ---
+    const botStartY = S / 2 + 160;
+    const botBlocks = 4;
+
+    for (let i = 0; i < botBlocks; i++) {
+      const y = botStartY + i * (blockH + 5);
+      drawBlock(ctx, topStackX, y, blockW, blockH, PALETTE[(i + 4) % PALETTE.length]);
+    }
+
+    // Sparkles on bottom stack
+    drawSparkles(ctx, S / 2, botStartY - 5, blockW);
 
     // Tagline
     ctx.fillStyle = "rgba(255,255,255,0.4)";
-    ctx.font = "500 32px -apple-system, Helvetica, Arial, sans-serif";
-    ctx.fillText("TAP \u2022 STACK \u2022 COMPETE", S / 2, 870);
+    ctx.font = "500 28px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("TAP \u2022 STACK \u2022 COMPETE", S / 2, botStartY + botBlocks * (blockH + 5) + 25);
 
     // Developer credit
     ctx.fillStyle = "rgba(255,255,255,0.45)";
-    ctx.font = "500 30px -apple-system, Helvetica, Arial, sans-serif";
-    ctx.fillText("- KWNG -", S / 2, 940);
+    ctx.font = "500 26px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("- KWNG -", S / 2, botStartY + botBlocks * (blockH + 5) + 60);
 
     // --- Helper functions ---
+
+    function drawBlock(ctx, x, y, w, h, color) {
+      const r = 14;
+      ctx.fillStyle = "rgba(0,0,0,0.3)";
+      roundRect(ctx, x + 4, y + 4, w, h, r);
+      ctx.fill();
+      const grad = ctx.createLinearGradient(x, y, x, y + h);
+      grad.addColorStop(0, lighten(color, 20));
+      grad.addColorStop(0.5, color);
+      grad.addColorStop(1, darken(color, 20));
+      ctx.fillStyle = grad;
+      roundRect(ctx, x, y, w, h, r);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      roundRect(ctx, x + 8, y + 4, w - 16, h * 0.35, r - 4);
+      ctx.fill();
+    }
 
     function roundRect(ctx, x, y, w, h, r) {
       ctx.beginPath();
@@ -186,11 +175,11 @@
 
     function drawSparkles(ctx, cx, cy, spread) {
       const sparkles = [
-        { x: cx - spread * 0.5, y: cy - 20, s: 12 },
-        { x: cx + spread * 0.5, y: cy - 15, s: 10 },
-        { x: cx - spread * 0.3, y: cy - 40, s: 8 },
-        { x: cx + spread * 0.35, y: cy - 35, s: 14 },
-        { x: cx, y: cy - 50, s: 10 },
+        { x: cx - spread * 0.5, y: cy - 15, s: 10 },
+        { x: cx + spread * 0.5, y: cy - 10, s: 8 },
+        { x: cx - spread * 0.25, y: cy - 30, s: 7 },
+        { x: cx + spread * 0.3, y: cy - 25, s: 11 },
+        { x: cx, y: cy - 38, s: 9 },
       ];
       sparkles.forEach(sp => {
         ctx.fillStyle = "rgba(255, 215, 0, 0.9)";

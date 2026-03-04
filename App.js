@@ -2084,11 +2084,28 @@ export default function App() {
     })),
   ).current;
 
-  // Audio players (expo-audio)
-  const gamePlayer = useAudioPlayer(require("./assets/game-music.wav"));
-  const gameOverPlayer = useAudioPlayer(require("./assets/gameover-music.wav"));
-  const stackPlayer = useAudioPlayer(require("./assets/stack-sound.wav"));
-  const perfectPlayer = useAudioPlayer(require("./assets/perfect-sound.wav"));
+  // Audio players (expo-audio) — wrapped for Android safety
+  const _gamePlayer = useAudioPlayer(require("./assets/game-music.wav"));
+  const _gameOverPlayer = useAudioPlayer(require("./assets/gameover-music.wav"));
+  const _stackPlayer = useAudioPlayer(require("./assets/stack-sound.wav"));
+  const _perfectPlayer = useAudioPlayer(require("./assets/perfect-sound.wav"));
+
+  // Safe wrapper: all player method calls go through try-catch to prevent native crashes
+  const safePlayer = useCallback((player) => {
+    if (!player) return { play() {}, pause() {}, seekTo() { return Promise.resolve(); }, get playing() { return false; }, set loop(v) {}, set volume(v) {} };
+    return {
+      play() { try { player.play(); } catch (_) {} },
+      pause() { try { player.pause(); } catch (_) {} },
+      seekTo(pos) { try { return player.seekTo(pos) || Promise.resolve(); } catch (_) { return Promise.resolve(); } },
+      get playing() { try { return player.playing; } catch (_) { return false; } },
+      set loop(v) { try { player.loop = v; } catch (_) {} },
+      set volume(v) { try { player.volume = v; } catch (_) {} },
+    };
+  }, []);
+  const gamePlayer = useMemo(() => safePlayer(_gamePlayer), [_gamePlayer, safePlayer]);
+  const gameOverPlayer = useMemo(() => safePlayer(_gameOverPlayer), [_gameOverPlayer, safePlayer]);
+  const stackPlayer = useMemo(() => safePlayer(_stackPlayer), [_stackPlayer, safePlayer]);
+  const perfectPlayer = useMemo(() => safePlayer(_perfectPlayer), [_perfectPlayer, safePlayer]);
 
   // Sync refs
   const musicMutedRef = useRef(false);
@@ -2257,17 +2274,20 @@ export default function App() {
       } else {
         // Everywhere else (start screen, idle, playing) — play game music
         gameOverPlayer.pause();
-        try { if (!gamePlayer.playing) gamePlayer.play(); } catch (_) {}
+        gamePlayer.play();
       }
     } catch (_) {}
   }, [gameState, musicMuted, appScreen]);
 
   // ---------- Play one-shot sound effect ----------
+  const sfxBusyRef = useRef(false);
   const playSfx = useCallback((player) => {
-    if (musicMutedRef.current || !player) return;
-    try {
-      player.seekTo(0).then(() => player.play()).catch(() => {});
-    } catch (_) {}
+    if (musicMutedRef.current || !player || sfxBusyRef.current) return;
+    sfxBusyRef.current = true;
+    player.seekTo(0).then(() => {
+      player.play();
+      setTimeout(() => { sfxBusyRef.current = false; }, 50);
+    }).catch(() => { sfxBusyRef.current = false; });
   }, []);
 
   // ---------- Game loop ----------
