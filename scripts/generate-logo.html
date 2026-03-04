@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Perfect Stack - Game Logo Generator</title>
+  <style>
+    body {
+      background: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: -apple-system, sans-serif;
+      color: #fff;
+    }
+    canvas {
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      margin: 20px;
+      background: repeating-conic-gradient(#808080 0% 25%, #666 0% 50%) 50% / 20px 20px;
+    }
+    button {
+      padding: 14px 36px;
+      font-size: 18px;
+      font-weight: 700;
+      background: #FFD700;
+      color: #0A0A1A;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover { background: #FFC107; }
+    p { color: #888; font-size: 14px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h2>Perfect Stack — Game Logo (600x400, transparent PNG)</h2>
+  <canvas id="logo" width="600" height="400"></canvas>
+  <button onclick="download()">Download Logo (PNG)</button>
+  <p>600 x 400 px — transparent background — for Google Play Games card</p>
+
+  <script>
+    const W = 600;
+    const H = 400;
+    const c = document.getElementById("logo");
+    const ctx = c.getContext("2d");
+
+    // Transparent background (don't fill)
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // "PERFECT" — white with subtle shadow
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.font = "bold 64px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("PERFECT", W / 2 + 2, 152);
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "bold 64px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("PERFECT", W / 2, 150);
+
+    // "STACK" — gold gradient with shadow
+    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.font = "bold 82px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("STACK", W / 2 + 2, 232);
+
+    const tGrad = ctx.createLinearGradient(W / 2 - 140, 200, W / 2 + 140, 260);
+    tGrad.addColorStop(0, "#FFD700");
+    tGrad.addColorStop(0.5, "#FFF3B0");
+    tGrad.addColorStop(1, "#FFD700");
+    ctx.fillStyle = tGrad;
+    ctx.font = "bold 82px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("STACK", W / 2, 230);
+
+    // Tagline
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "500 18px -apple-system, Helvetica, Arial, sans-serif";
+    ctx.fillText("TAP \u2022 STACK \u2022 COMPETE", W / 2, 295);
+
+    function download() {
+      const link = document.createElement("a");
+      link.download = "game-logo-600x400.png";
+      link.href = c.toDataURL("image/png");
+      link.click();
+    }
+  </script>
+</body>
+</html>

@@ -2253,12 +2253,11 @@ export default function App() {
       // Game over — play jingle, stop game music
       if (appScreen === "game" && gameState === "over") {
         gamePlayer.pause();
-        gameOverPlayer.seekTo(0);
-        gameOverPlayer.play();
+        gameOverPlayer.seekTo(0).then(() => gameOverPlayer.play()).catch(() => {});
       } else {
         // Everywhere else (start screen, idle, playing) — play game music
         gameOverPlayer.pause();
-        if (!gamePlayer.playing) gamePlayer.play();
+        try { if (!gamePlayer.playing) gamePlayer.play(); } catch (_) {}
       }
     } catch (_) {}
   }, [gameState, musicMuted, appScreen]);
@@ -2267,8 +2266,7 @@ export default function App() {
   const playSfx = useCallback((player) => {
     if (musicMutedRef.current || !player) return;
     try {
-      player.seekTo(0);
-      player.play();
+      player.seekTo(0).then(() => player.play()).catch(() => {});
     } catch (_) {}
   }, []);
 
