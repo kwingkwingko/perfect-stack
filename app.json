@@ -2,7 +2,7 @@
   "expo": {
     "name": "Perfect Stack",
     "slug": "perfect-stack",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "scheme": "perfect-stack",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
